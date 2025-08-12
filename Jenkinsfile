@@ -1,27 +1,36 @@
 pipeline {
-    agent {
-        dockerfile {
-            // Specifies the directory containing the Dockerfile, if not at the root
-            // dir 'my-docker-app' 
-            
-            // Specifies a different Dockerfile name if not 'Dockerfile'
-            // filename 'Dockerfile.build' 
-            
-            // Optional: Pass additional build arguments to the docker build command
-            // additionalBuildArgs '--build-arg MY_VAR=value'
-            
-            // Optional: Arguments to pass to the 'docker run' command when running the container
-            args '-p 8080:8080' 
+    agent any // Or specify a label for a specific agent: agent { label 'my-docker-agent' }
+
+    stages {
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    // Build the Docker image from the Dockerfile in the current directory
+                    // Replace 'my-image' and 'latest' with your desired image name and tag
+                    docker.build('jenkins/jenkins')
+                }
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                script {
+                    // Run the built Docker image as a container
+                    // Replace 'my-image' and 'latest' with your image name and tag
+                    // Add any necessary port mappings or volume mounts here
+                    docker.image('jenkins/jenkins').run('-p 8080:8080')
+                }
+            }
         }
     }
-    stages {
-        stage('Build and Run Docker Container') {
-            steps {
-                // The agent directive handles the Docker build and run automatically.
-                // You can add further steps here to interact with the running container if needed.
-                sh 'echo "Docker container built and running on the agent!"'
-                // Example: Run a command inside the container
-                // sh 'docker exec $(docker ps -q --filter ancestor=<image_id>) ls /app' 
+
+    post {
+        always {
+            // Clean up any running containers or images if necessary
+            script {
+                // Optional: Stop and remove the container after the pipeline completes
+                // docker.image('my-image:latest').stop()
+                // docker.image('my-image:latest').remove()
             }
         }
     }
